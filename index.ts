@@ -129,7 +129,7 @@ export class Loader<Result> {
   }
 
   private freeResults(count: number): void {
-    if (count > 1) {
+    if (count > 0) {
       for (let i = 0; i < count; i++) {
         this.onFree?.(this.results[i]);
       }
