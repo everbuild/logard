@@ -12,7 +12,7 @@ export interface Uninstall {
 }
 
 export interface OnLoad<Result> {
-  (tracker: Scope): Result | Promise<Result>;
+  (scope: Scope): Result | Promise<Result>;
 }
 
 export interface OnFree<Result> {
@@ -149,8 +149,8 @@ class PropWrapper {
     this.loader = props[key];
   }
 
-  async load(tracker: Scope): Promise<void> {
-    this.result = await this.loader.getResult(tracker);
+  async load(scope: Scope): Promise<void> {
+    this.result = await this.loader.getResult(scope);
   }
 
   apply(): void {
@@ -201,9 +201,9 @@ class Manager {
   async startTransition(route: RouteLocationNormalized): Promise<void> {
     this.debug(`Transition to ${route.fullPath}`);
     const props = route.matched.flatMap(record => this.getProps(record));
-    const tracker = new Scope(extractRouteParams(route));
+    const scope = new Scope(extractRouteParams(route));
     try {
-      await Promise.all(props.map(p => p.load(tracker)));
+      await Promise.all(props.map(p => p.load(scope)));
       props.forEach(p => p.apply());
     } finally {
       this.activeLoaders.clear();
