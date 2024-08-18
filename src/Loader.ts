@@ -30,7 +30,8 @@ export class Loader<Result> {
     return false;
   }
 
-  getResult(scope: TrackingScope): Promise<Result> {
+  getResult(scope: Scope): Promise<Result> {
+    if (!(scope instanceof TrackingScope)) throw new Error('invalid scope');
     scope.addLoader(this);
     if (this.needsLoad(scope.params)) {
       try {
