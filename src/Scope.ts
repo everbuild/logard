@@ -20,9 +20,9 @@ export default abstract class Scope {
    * If no (valid) parameter is found and no fallback value is provided, `undefined` is returned.
    * @param name
    * @param sanitizer
-   * @param fallback
+   * @param fallback coerced to string - manually perform the string conversion if more control is needed
    */
-  getQueryParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string): T | undefined;
+  getQueryParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string | T): T | undefined;
 
   getQueryParam(...args: Array<any>): any {
     return this.getParam('query', args, false)[0];
@@ -44,9 +44,9 @@ export default abstract class Scope {
    * If no (valid) parameters are found and no fallback values are provided, an empty array is returned.
    * @param name
    * @param sanitizer
-   * @param fallback
+   * @param fallback array of fallback values; elements coerced to strings - manually perform the string conversion if more control is needed
    */
-  getQueryParams<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: Array<string>): Array<T>;
+  getQueryParams<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: Array<string | T>): Array<T>;
 
   getQueryParams(...args: Array<any>): Array<any> {
     return this.getParam('query', args, true);
@@ -67,9 +67,9 @@ export default abstract class Scope {
    * Note that the fallback value is intentionally ignored in the latter case as it's not possible to add path parameters.
    * @param name
    * @param sanitizer
-   * @param fallback
+   * @param fallback coerced to string - manually perform the string conversion if more control is needed
    */
-  getPathParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string): T | undefined;
+  getPathParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string | T): T | undefined;
 
   getPathParam(...args: Array<any>): any {
     return this.getParam('path', args, false)[0];
@@ -80,7 +80,7 @@ export default abstract class Scope {
   private getParam(source: ParamSource, args: Array<any>, multi: boolean): Array<any> {
     const name: string = args[0];
     const sanitizer: ParamSanitizer<any> = typeof args[1] === 'function' ? args[1] : saneString;
-    const fallback: Array<string> = [typeof args[1] === 'function' ? args[2] : args[1]].flat().filter(v => v !== undefined);
+    const fallback: Array<string> = [typeof args[1] === 'function' ? args[2] : args[1]].flat().filter(v => v !== undefined).map(v => `${v}`);
 
     const rawValue = this.getParamValue(name, source);
 

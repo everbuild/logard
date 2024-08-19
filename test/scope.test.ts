@@ -28,6 +28,8 @@ test('scope', () => {
   expect(scope.getQueryParam('querySingle')).toBe('string');
   expect(scope.getQueryParams('querySingle')).toEqual(['string']);
   expect(captureRedirectLocation(() => scope.getQueryParam('querySingle', saneNumber))).toEqual({ query: {} });
+  expect(captureRedirectLocation(() => scope.getQueryParam('querySingle', saneNumber, 0))).toEqual({ query: { querySingle: '0' } });
+  expect(captureRedirectLocation(() => scope.getQueryParam('queryNotFound', saneNumber, 0))).toEqual({ query: { queryNotFound: '0' } });
   expect(captureRedirectLocation(() => scope.getQueryParam('queryMulti'))).toEqual({ query: { queryMulti: 'string1' } });
   expect(scope.getQueryParams('queryMulti')).toEqual(['string1', 'string2']);
   expect(captureRedirectLocation(() => scope.getQueryParams('queryNotFound', ['1', '2']))).toEqual({ query: { queryNotFound: ['1', '2'] } });
