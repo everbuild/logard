@@ -136,6 +136,16 @@ export default abstract class Scope {
     return results.map(r => r.output!);
   }
 
+  /**
+   * Removes all query parameters with the given name by performing a redirect.
+   * If no parameters are found this has no effect (other than dependency tracking).
+   * @param name
+   */
+  removeQueryParams(name: string): void {
+    const rawValue = this.getParamValue(name, 'query');
+    if (rawValue && rawValue.length > 0) throw this.fixParam(name, 'query', undefined);
+  }
+
   private fixParam(name: string, source: ParamSource, value: undefined | LocationQueryValue | LocationQueryValue[]) {
     return new RedirectError({ [source === 'path' ? 'params' : 'query']: { [name]: value } });
   }
