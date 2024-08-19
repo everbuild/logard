@@ -1,0 +1,1 @@
+* allow fallback in internal type - just toString it? - if ever this is not ok users can still do manual serialisation

@@ -25,8 +25,11 @@ export function saneString(input: string): string {
 }
 
 export function saneNumber(input: string): number {
+  if (input === '') throw new InvalidParam();
   const output = parseInt(input, 10);
   if (Number.isNaN(output)) throw new InvalidParam();
+  const outputString = `${output}`;
+  if (outputString !== input) throw new InvalidParam(outputString);
   return output;
 }
 
