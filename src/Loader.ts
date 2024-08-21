@@ -4,7 +4,7 @@ import Scope from './Scope';
 import TrackingScope from './TrackingScope';
 
 export interface OnLoad<Result> {
-  (scope: Scope): Result | Promise<Result>;
+  (scope: Scope, previousResult: Result | undefined): Result | Promise<Result>;
 }
 
 export interface OnFree<Result> {
@@ -36,9 +36,9 @@ export class Loader<Result> {
     if (this.needsLoad(scope.params)) {
       try {
         const localScope = new TrackingScope(scope.params);
-        this.promise = Promise.resolve(this.onLoad(localScope));
+        this.promise = Promise.resolve(this.onLoad(localScope, this.results[0]));
         this.scope = localScope;
-        this.promise.then(r => this.results.push(r), () => {
+        this.promise.then(r => this.results.unshift(r), () => {
           // avoids incorrect reporting of uncaught errors in Chrome
         });
       } catch (error) {
@@ -54,21 +54,19 @@ export class Loader<Result> {
   }
 
   clean(): void {
-    this.freeResults(this.results.length - 1);
+    this.freeResults(1);
   }
 
   reset(): void {
-    this.freeResults(this.results.length);
+    this.freeResults(0);
     this.promise = undefined;
     this.scope = undefined;
   }
 
-  private freeResults(count: number): void {
-    if (count > 0) {
-      for (let i = 0; i < count; i++) {
-        this.onFree?.(this.results[i]);
-      }
-      this.results.splice(0, count);
+  private freeResults(offset = 0): void {
+    for (let i = offset; i < this.results.length; i++) {
+      this.onFree?.(this.results[i]);
     }
+    this.results.splice(offset);
   }
 }
