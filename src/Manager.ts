@@ -75,6 +75,9 @@ export class Manager {
     try {
       await Promise.all(props.map(p => p.load(scope)));
       props.forEach(p => p.apply());
+    } catch (error) {
+      // avoids incorrect reporting of uncaught errors in Chrome
+      throw error;
     } finally {
       this.activeLoaders.clear();
       props.forEach(p => p.loader.collectAffectedLoaders(this.activeLoaders));

@@ -100,8 +100,11 @@ export default abstract class Scope {
 
     if (results.some(r => r.error)) {
       const remainingResults = results.filter(r => !r.error || r.error.newValue !== undefined);
-      if (remainingResults.length === 0 && fallback.length > 0) throw this.fixParam(name, source, fallback);
-      if (remainingResults.length === 0 && source === 'path') return [];
+      if (remainingResults.length === 0) {
+        // special treatment of empty values - crucial for paths but also for query parameters that require a distinction between "not present" and "empty"
+        if (rawValue[0] === '') return [];
+        if (fallback.length > 0) throw this.fixParam(name, source, fallback);
+      }
       const newValues = remainingResults.map(r => r.error ? r.error.newValue! : r.input);
       throw this.fixParam(name, source, multi ? newValues : newValues[0]);
     }

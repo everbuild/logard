@@ -6,7 +6,7 @@ import { saneBoolean, saneNumber, saneOption } from '../src/sanitizers.js';
 test('scope', () => {
   const scope = new TrackingScope({
     query: {
-      queryEmpty: [],
+      queryEmpty: [''],
       querySingle: ['string'],
       queryMulti: ['string1', 'string2'],
       queryTrue: ['y'],
@@ -24,7 +24,11 @@ test('scope', () => {
 
   expect(scope.getQueryParam('queryNotFound')).toBe(undefined);
   expect(captureRedirectLocation(() => scope.getQueryParam('queryNotFound', 'fallback'))).toEqual({ query: { queryNotFound: 'fallback' } });
-  expect(scope.getQueryParam('queryEmpty')).toBe(undefined);
+  expect(scope.getQueryParam('queryEmpty')).toBe('');
+  expect(scope.getQueryParam('queryEmpty', 'fallback')).toBe('');
+  expect(scope.getQueryParam('queryEmpty', saneNumber)).toBe(undefined);
+  expect(scope.getQueryParam('queryEmpty', saneNumber, 0)).toBe(undefined);
+  expect(captureRedirectLocation(() => scope.getQueryParam('querySingle', saneNumber, 10))).toEqual({ query: { querySingle: '10' } });
   expect(scope.getQueryParam('querySingle')).toBe('string');
   expect(scope.getQueryParams('querySingle')).toEqual(['string']);
   expect(captureRedirectLocation(() => scope.getQueryParam('querySingle', saneNumber))).toEqual({ query: {} });
@@ -44,7 +48,7 @@ test('scope', () => {
   expect(captureRedirectLocation(() => scope.getPathParam('pathOption', saneOption(['2', '3']), '2'))).toEqual({ params: { pathOption: '2' } });
   expect(scope.getPathParam('pathEmpty')).toBe('');
   expect(scope.getPathParam('pathEmpty', saneNumber)).toBe(undefined);
-  expect(captureRedirectLocation(() => scope.getPathParam('pathEmpty', saneNumber, '0'))).toEqual({ params: { pathEmpty: '0' } });
+  expect(scope.getPathParam('pathEmpty', saneNumber, '0')).toBe(undefined);
   expect(scope.getPathParam('pathNotFound')).toBe(undefined);
   expect(scope.getPathParam('pathNotFound', saneNumber)).toBe(undefined);
   expect(scope.getPathParam('pathNotFound', saneNumber, '0')).toBe(undefined);
