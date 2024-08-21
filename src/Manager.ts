@@ -46,7 +46,7 @@ export class Manager {
     const removeBefore = router.beforeEach((to, from, next) => this.startTransition(to).then(() => {
       this.redirectCount = 0;
       next();
-    }, error => {
+    }).catch(error => {
       if (error instanceof RedirectError) {
         if (++this.redirectCount > this.redirectLimit) {
           this.redirectCount = 0;
@@ -75,9 +75,6 @@ export class Manager {
     try {
       await Promise.all(props.map(p => p.load(scope)));
       props.forEach(p => p.apply());
-    } catch (error) {
-      // avoids incorrect reporting of uncaught errors in Chrome
-      throw error;
     } finally {
       this.activeLoaders.clear();
       props.forEach(p => p.loader.collectAffectedLoaders(this.activeLoaders));
