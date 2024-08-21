@@ -38,7 +38,9 @@ export class Loader<Result> {
         const localScope = new TrackingScope(scope.params);
         this.promise = Promise.resolve(this.onLoad(localScope));
         this.scope = localScope;
-        this.promise.then(r => this.results.push(r));
+        this.promise.then(r => this.results.push(r), () => {
+          // avoids incorrect reporting of uncaught errors in Chrome
+        });
       } catch (error) {
         this.promise = Promise.reject(error);
       }

@@ -46,7 +46,7 @@ export class Manager {
     const removeBefore = router.beforeEach((to, from, next) => this.startTransition(to).then(() => {
       this.redirectCount = 0;
       next();
-    }).catch(error => {
+    }, error => {
       if (error instanceof RedirectError) {
         if (++this.redirectCount > this.redirectLimit) {
           this.redirectCount = 0;
