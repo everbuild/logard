@@ -26,31 +26,32 @@ export class Loader<Result> {
     if (!this.scope) return true;
     if ([...this.scope.usedPathParams].some(p => !paramValuesAreSimilar(this.scope!.params.path[p], params.path[p]))) return true;
     if ([...this.scope.usedQueryParams].some(p => !paramValuesAreSimilar(this.scope!.params.query[p], params.query[p]))) return true;
-    if ([...this.scope.usedLoaders].some(l => l.needsLoad(params))) return true;
+    if ([...this.scope.usedLoaders.entries()].some(([l, r]) => l.needsLoad(params) || l.promise !== r)) return true;
     return false;
   }
 
   getResult(scope: Scope): Promise<Result> {
     if (!(scope instanceof TrackingScope)) throw new Error('invalid scope');
-    scope.addLoader(this);
     if (this.needsLoad(scope.params)) {
-      try {
-        const localScope = new TrackingScope(scope.params);
-        this.promise = Promise.resolve(this.onLoad(localScope, this.results[0]));
-        this.scope = localScope;
-        this.promise.then(r => this.results.unshift(r), () => {
-          // avoids incorrect reporting of uncaught errors in Chrome
-        });
-      } catch (error) {
-        this.promise = Promise.reject(error);
-      }
+      this.promise = this.doLoad(scope);
+      this.promise.catch(() => {
+        // avoids incorrect reporting of uncaught errors in Chrome
+      });
     }
+    scope.addLoader(this, this.promise!);
     return this.promise!;
+  }
+
+  private async doLoad(scope: TrackingScope): Promise<Result> {
+    this.scope = new TrackingScope(scope.params);
+    const result = await this.onLoad(this.scope, this.results[0]);
+    this.results.unshift(result);
+    return result;
   }
 
   collectAffectedLoaders(set: Set<Loader<any>>): void {
     set.add(this);
-    this.scope?.usedLoaders.forEach(l => l.collectAffectedLoaders(set));
+    this.scope?.usedLoaders.forEach((p, l) => l.collectAffectedLoaders(set));
   }
 
   clean(): void {

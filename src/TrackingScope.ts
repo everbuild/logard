@@ -5,7 +5,7 @@ import Scope from './Scope';
 export default class TrackingScope extends Scope {
   usedPathParams = new Set<string>();
   usedQueryParams = new Set<string>();
-  usedLoaders = new Set<Loader<any>>();
+  usedLoaders = new Map<Loader<any>, Promise<any>>();
 
   constructor(
     public params: RouteParams,
@@ -18,7 +18,7 @@ export default class TrackingScope extends Scope {
     return this.params[source][name];
   }
 
-  addLoader(peer: any): void {
-    this.usedLoaders.add(peer);
+  addLoader(loader: Loader<any>, result: Promise<any>): void {
+    this.usedLoaders.set(loader, result);
   }
 }
