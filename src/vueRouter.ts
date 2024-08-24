@@ -24,7 +24,7 @@ class PropWrapper {
   }
 }
 
-export class VueRouterManager extends Manager {
+class VueRouterManager extends Manager {
   propMap = new WeakMap<RouteRecordNormalized, Array<PropWrapper>>();
   uninstall: Uninstall;
 

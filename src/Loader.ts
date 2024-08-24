@@ -11,8 +11,17 @@ export interface OnFree<Result> {
 }
 
 export class Loader<Result> {
+  /**
+   * @internal
+   */
   private results: Array<Result> = [];
+  /**
+   * @internal
+   */
   private promise?: Promise<Result>;
+  /**
+   * @internal
+   */
   private scope?: TrackingScope;
 
   constructor(
@@ -33,6 +42,9 @@ export class Loader<Result> {
     return this.promise!;
   }
 
+  /**
+   * @internal
+   */
   private needsLoad(params: RouteParams, attribs: RouteAttributes): boolean {
     if (!this.scope) return true;
     if ([...this.scope.usedPathParams].some(p => !this.paramValuesAreSimilar(this.scope!.params.path[p], params.path[p]))) return true;
@@ -42,6 +54,9 @@ export class Loader<Result> {
     return false;
   }
 
+  /**
+   * @internal
+   */
   private paramValuesAreSimilar(a: RouteParamValues | undefined, b: RouteParamValues | undefined): boolean {
     if (a === undefined) return b === undefined;
     if (b === undefined) return false;
@@ -52,6 +67,9 @@ export class Loader<Result> {
     return true;
   }
 
+  /**
+   * @internal
+   */
   private async doLoad(scope: TrackingScope): Promise<Result> {
     this.scope = new TrackingScope(scope.params, scope.attribs);
     const result = await this.onLoad(this.scope, this.results[0]);
@@ -59,21 +77,33 @@ export class Loader<Result> {
     return result;
   }
 
-  collectAffectedLoaders(set: Set<Loader<any>>): void {
+  /**
+   * @internal
+   */
+  collectUsedLoaders(set: Set<Loader<any>>): void {
     set.add(this);
-    this.scope?.usedLoaders.forEach((p, l) => l.collectAffectedLoaders(set));
+    this.scope?.usedLoaders.forEach((p, l) => l.collectUsedLoaders(set));
   }
 
+  /**
+   * @internal
+   */
   clean(): void {
     this.freeResults(1);
   }
 
+  /**
+   * @internal
+   */
   reset(): void {
     this.freeResults(0);
     this.promise = undefined;
     this.scope = undefined;
   }
 
+  /**
+   * @internal
+   */
   private freeResults(offset = 0): void {
     for (let i = offset; i < this.results.length; i++) {
       this.onFree?.(this.results[i]);

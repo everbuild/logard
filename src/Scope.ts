@@ -4,22 +4,13 @@ import { InvalidParam, ParamSanitizer, saneString } from './sanitizers';
 export default abstract class Scope {
   /**
    * Get the string value of the single query parameter with the given name.
-   * If multiple parameters are found with this name, a redirect is performed to strip the redundant ones.
-   * If no (valid) parameter is found and a fallback value is provided, a redirect is performed to use that instead.
-   * If no (valid) parameter is found and no fallback value is provided, `undefined` is returned.
-   * @param name
-   * @param fallback
+   * @see https://github.com/everbuild/logard#scope
    */
   getQueryParam(name: string, fallback?: string): string | undefined;
 
   /**
    * Get the sanitized value of the single query parameter with the given name.
-   * If multiple parameters are found with this name, a redirect is performed to strip the redundant ones.
-   * If no (valid) parameter is found and a fallback value is provided, a redirect is performed to use that instead.
-   * If no (valid) parameter is found and no fallback value is provided, `undefined` is returned.
-   * @param name
-   * @param sanitizer
-   * @param fallback coerced to string - manually perform the string conversion if more control is needed
+   * @see https://github.com/everbuild/logard#scope
    */
   getQueryParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string | T): T | undefined;
 
@@ -29,21 +20,13 @@ export default abstract class Scope {
 
   /**
    * Get an array of string values of all query parameters with the given name.
-   * Note this is equivalent to using the {@Link saneString} sanitizer.
-   * If no (valid) parameters are found and fallback values are provided, a redirect is performed to use those instead.
-   * If no (valid) parameters are found and no fallback values are provided, an empty array is returned.
-   * @param name
-   * @param fallback
+   * @see https://github.com/everbuild/logard#scope
    */
   getQueryParams(name: string, fallback?: Array<string>): Array<string>;
 
   /**
    * Get an array of sanitized values of all query parameters with the given name.
-   * If no (valid) parameters are found and fallback values are provided, a redirect is performed to use those instead.
-   * If no (valid) parameters are found and no fallback values are provided, an empty array is returned.
-   * @param name
-   * @param sanitizer
-   * @param fallback array of fallback values; elements coerced to strings - manually perform the string conversion if more control is needed
+   * @see https://github.com/everbuild/logard#scope
    */
   getQueryParams<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: Array<string | T>): Array<T>;
 
@@ -53,20 +36,13 @@ export default abstract class Scope {
 
   /**
    * Get the string value of the path parameter with the given name (there can only be one).
-   * If no parameter is found `undefined` is returned.
-   * @param name
+   * @see https://github.com/everbuild/logard#scope
    */
   getPathParam(name: string): string | undefined;
 
   /**
    * Get the sanitized value of the path parameter with the given name (there can only be one).
-   * If the parameter has an invalid value and a fallback value is provided, a redirect is performed to use that instead.
-   * If the parameter has an invalid value and no fallback value is provided, `undefined` is returned.
-   * If no parameter is found, `undefined` is returned as well.
-   * Note that the fallback value is intentionally ignored in the latter case as it's not possible to add path parameters.
-   * @param name
-   * @param sanitizer
-   * @param fallback coerced to string - manually perform the string conversion if more control is needed
+   * @see https://github.com/everbuild/logard#scope
    */
   getPathParam<T>(name: string, sanitizer: ParamSanitizer<T>, fallback?: string | T): T | undefined;
 
@@ -74,6 +50,9 @@ export default abstract class Scope {
     return this.getParam('path', args, false)[0];
   }
 
+  /**
+   * @internal
+   */
   private getParam(source: ParamSource, args: Array<any>, multi: boolean): Array<any> {
     const name: string = args[0];
     const sanitizer: ParamSanitizer<any> = typeof args[1] === 'function' ? args[1] : saneString;
@@ -111,18 +90,23 @@ export default abstract class Scope {
     return results.map(r => r.output!);
   }
 
+  /**
+   * @internal
+   */
   protected abstract getParamValue(name: string, source: ParamSource): Array<string> | undefined;
 
   /**
    * Removes all query parameters with the given name by performing a redirect.
    * If no parameters are found this has no effect (other than dependency tracking).
-   * @param name
    */
   removeQueryParams(name: string): void {
     const rawValue = this.getParamValue(name, 'query');
     if (rawValue && rawValue.length > 0) throw this.fixParam(name, 'query', []);
   }
 
+  /**
+   * @internal
+   */
   private fixParam(name: string, source: ParamSource, value: RouteParamValues) {
     const key = source === 'path' ? 'path' : 'query';
     return new RedirectError({ [key]: { [name]: value } });
