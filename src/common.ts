@@ -9,6 +9,8 @@ export interface RouteParams {
   query: RouteParamMap;
 }
 
+export type RouteAttributes = Record<string, any>;
+
 /**
  * If a loader throws this, a redirect to the given location is performed.
  * @see RedirectLimitError

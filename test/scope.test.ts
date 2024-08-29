@@ -20,6 +20,8 @@ test('scope', () => {
       pathOption: ['1'],
       pathEmpty: [''],
     },
+  },{
+    attribFound: 1337
   });
 
   expect(scope.getQueryParam('queryNotFound')).toBe(undefined);
@@ -52,6 +54,9 @@ test('scope', () => {
   expect(scope.getPathParam('pathNotFound')).toBe(undefined);
   expect(scope.getPathParam('pathNotFound', saneNumber)).toBe(undefined);
   expect(scope.getPathParam('pathNotFound', saneNumber, '0')).toBe(undefined);
+
+  expect(scope.getAttribute('attribNotFound')).toBe(undefined);
+  expect(scope.getAttribute('attribFound')).toBe(1337);
 });
 
 function captureRedirectLocation(fn: () => any): RouteLocationRaw | undefined {

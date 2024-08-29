@@ -1,4 +1,4 @@
-import { RouteParams } from './common';
+import { RouteAttributes, RouteParams } from './common';
 import { paramValuesAreSimilar } from './util';
 import Scope from './Scope';
 import TrackingScope from './TrackingScope';
@@ -22,17 +22,18 @@ export class Loader<Result> {
   ) {
   }
 
-  needsLoad(params: RouteParams): boolean {
+  needsLoad(params: RouteParams, attribs: RouteAttributes): boolean {
     if (!this.scope) return true;
     if ([...this.scope.usedPathParams].some(p => !paramValuesAreSimilar(this.scope!.params.path[p], params.path[p]))) return true;
     if ([...this.scope.usedQueryParams].some(p => !paramValuesAreSimilar(this.scope!.params.query[p], params.query[p]))) return true;
-    if ([...this.scope.usedLoaders.entries()].some(([l, r]) => l.needsLoad(params) || l.promise !== r)) return true;
+    if ([...this.scope.usedAttribs].some(a => this.scope!.attribs[a] !== attribs[a])) return true;
+    if ([...this.scope.usedLoaders.entries()].some(([l, r]) => l.needsLoad(params, attribs) || l.promise !== r)) return true;
     return false;
   }
 
   getResult(scope: Scope): Promise<Result> {
     if (!(scope instanceof TrackingScope)) throw new Error('invalid scope');
-    if (this.needsLoad(scope.params)) {
+    if (this.needsLoad(scope.params, scope.attribs)) {
       this.promise = this.doLoad(scope);
       this.promise.catch(() => {
         // avoids incorrect reporting of uncaught errors in Chrome
@@ -43,7 +44,7 @@ export class Loader<Result> {
   }
 
   private async doLoad(scope: TrackingScope): Promise<Result> {
-    this.scope = new TrackingScope(scope.params);
+    this.scope = new TrackingScope(scope.params, scope.attribs);
     const result = await this.onLoad(this.scope, this.results[0]);
     this.results.unshift(result);
     return result;

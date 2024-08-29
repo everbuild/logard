@@ -71,7 +71,7 @@ export class Manager {
   private async startTransition(route: RouteLocationNormalized): Promise<void> {
     this.debug(`Transition to ${route.fullPath}`);
     const props = route.matched.flatMap(record => this.getProps(record));
-    const scope = new TrackingScope(extractRouteParams(route));
+    const scope = new TrackingScope(extractRouteParams(route), route.meta);
     try {
       await Promise.all(props.map(p => p.load(scope)));
       props.forEach(p => p.apply());

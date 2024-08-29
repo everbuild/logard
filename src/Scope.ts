@@ -75,8 +75,6 @@ export default abstract class Scope {
     return this.getParam('path', args, false)[0];
   }
 
-  protected abstract getParamValue(name: string, source: ParamSource): Array<string> | undefined;
-
   private getParam(source: ParamSource, args: Array<any>, multi: boolean): Array<any> {
     const name: string = args[0];
     const sanitizer: ParamSanitizer<any> = typeof args[1] === 'function' ? args[1] : saneString;
@@ -114,6 +112,8 @@ export default abstract class Scope {
     return results.map(r => r.output!);
   }
 
+  protected abstract getParamValue(name: string, source: ParamSource): Array<string> | undefined;
+
   /**
    * Removes all query parameters with the given name by performing a redirect.
    * If no parameters are found this has no effect (other than dependency tracking).
@@ -130,4 +130,6 @@ export default abstract class Scope {
     const valueNormalized = Array.isArray(value) && value.length < 2 ? value[0] : value;
     return new RedirectError({ [key]: { [name]: valueNormalized } });
   }
+
+  abstract getAttribute<T>(name: string): T | undefined;
 }
