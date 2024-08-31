@@ -1,12 +1,7 @@
-import { Manager } from '../src/Manager.js';
 import { Loader } from '../src/Loader.js';
+import { installRouteLoader } from '../src/vueRouter';
 
 test('redirect', async () => {
-  const mgr = new Manager({
-    redirectLimit: 4,
-    debug: true,
-  });
-
   const loader1 = new Loader((s) => {
     return s.getQueryParam('queryParam', 'defaultQueryValue') ?? '?';
   });
@@ -28,25 +23,22 @@ test('redirect', async () => {
     query: {},
   };
 
+  let onBefore: (route: any) => Promise<any>;
+
   const router = {
-    before: (to: any, from: any, next: (v: any) => void) => {},
-    beforeEach(g: any) {
-      this.before = g;
-    },
-    afterEach(h: any) {},
+    beforeEach: (g: any) => onBefore = g,
+    afterEach: (h: any) => {},
   };
 
-  mgr.install(router as any);
+  installRouteLoader(router as any, {
+    redirectLimit: 4,
+    debug: true,
+  });
 
   await transitionTo(route);
 
-  function transitionTo(route: any): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      router.before(route, {}, v => {
-        if (!v) resolve();
-        else if (v instanceof Error) reject(v);
-        else resolve(transitionTo({ ...route, ...v }));
-      });
-    });
+  async function transitionTo(route: any): Promise<void> {
+    const newRoute = await onBefore(route);
+    if (newRoute) return transitionTo({ ...route, ...newRoute });
   }
 });

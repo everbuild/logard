@@ -1,5 +1,4 @@
-import { RouteAttributes, RouteParams } from './common';
-import { paramValuesAreSimilar } from './util';
+import { RouteAttributes, RouteParams, RouteParamValues } from './common';
 import Scope from './Scope';
 import TrackingScope from './TrackingScope';
 
@@ -22,15 +21,6 @@ export class Loader<Result> {
   ) {
   }
 
-  needsLoad(params: RouteParams, attribs: RouteAttributes): boolean {
-    if (!this.scope) return true;
-    if ([...this.scope.usedPathParams].some(p => !paramValuesAreSimilar(this.scope!.params.path[p], params.path[p]))) return true;
-    if ([...this.scope.usedQueryParams].some(p => !paramValuesAreSimilar(this.scope!.params.query[p], params.query[p]))) return true;
-    if ([...this.scope.usedAttribs].some(a => this.scope!.attribs[a] !== attribs[a])) return true;
-    if ([...this.scope.usedLoaders.entries()].some(([l, r]) => l.needsLoad(params, attribs) || l.promise !== r)) return true;
-    return false;
-  }
-
   getResult(scope: Scope): Promise<Result> {
     if (!(scope instanceof TrackingScope)) throw new Error('invalid scope');
     if (this.needsLoad(scope.params, scope.attribs)) {
@@ -41,6 +31,25 @@ export class Loader<Result> {
     }
     scope.addLoader(this, this.promise!);
     return this.promise!;
+  }
+
+  private needsLoad(params: RouteParams, attribs: RouteAttributes): boolean {
+    if (!this.scope) return true;
+    if ([...this.scope.usedPathParams].some(p => !this.paramValuesAreSimilar(this.scope!.params.path[p], params.path[p]))) return true;
+    if ([...this.scope.usedQueryParams].some(p => !this.paramValuesAreSimilar(this.scope!.params.query[p], params.query[p]))) return true;
+    if ([...this.scope.usedAttribs].some(a => this.scope!.attribs[a] !== attribs[a])) return true;
+    if ([...this.scope.usedLoaders.entries()].some(([l, r]) => l.needsLoad(params, attribs) || l.promise !== r)) return true;
+    return false;
+  }
+
+  private paramValuesAreSimilar(a: RouteParamValues | undefined, b: RouteParamValues | undefined): boolean {
+    if (a === undefined) return b === undefined;
+    if (b === undefined) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; ++i) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
   }
 
   private async doLoad(scope: TrackingScope): Promise<Result> {

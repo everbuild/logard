@@ -1,5 +1,6 @@
-import { Manager } from '../src/Manager.js';
+import { RouteParams } from '../src/common';
 import { Loader } from '../src/Loader.js';
+import { Manager } from '../src/Manager.js';
 
 test('load', async () => {
   const mgr = new Manager();
@@ -17,60 +18,36 @@ test('load', async () => {
     return `${a} ${b}`;
   });
 
-  const props1 = {
-    result1: loader1,
-  };
-
-  const props2 = {
-    result2: loader2,
-  };
-
-  const route1 = {
-    fullPath: 'testPath',
-    matched: [
-      {
-        props: {
-          view: props1,
-        },
-      },
-    ],
-    params: {
-      pathParam: 'hi',
+  const params1: RouteParams = {
+    path: {
+      pathParam: ['hi'],
     },
     query: {},
-  } as any;
+  };
 
-  const route2 = {
-    fullPath: 'testPath',
-    matched: [
-      {
-        props: {
-          view: props2,
-        },
-      },
-    ],
-    params: {
-      pathParam: 'hello',
+  const params2: RouteParams = {
+    path: {
+      pathParam: ['hello'],
     },
     query: {
-      queryParam: 'world',
+      queryParam: ['world'],
     },
-  } as any;
+  };
 
-  await mgr['startTransition'](route1);
-  await mgr['endTransition']();
+  const results1 = await mgr.startTransition('1', [loader1], params1, {});
+  mgr.endTransition();
 
-  expect(props1.result1).toBe('hi');
+  expect(results1).toEqual(['hi']);
 
-  await mgr['startTransition'](route2);
-  await mgr['endTransition']();
+  const results2 = await mgr.startTransition('2', [loader2], params2, {});
+  mgr.endTransition();
 
-  expect(props2.result2).toBe('hello world');
+  expect(results2).toEqual(['hello world']);
 
-  await mgr['startTransition'](route1);
-  await mgr['endTransition']();
+  const results3 = await mgr.startTransition('3', [loader1], params1, {});
+  mgr.endTransition();
 
-  expect(props1.result1).toBe('bye');
+  expect(results3).toEqual(['bye']);
 });
 
 export function tick(): Promise<void> {

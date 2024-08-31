@@ -1,5 +1,4 @@
-import { ParamSource, RedirectError } from './common';
-import { LocationQueryValue } from 'vue-router';
+import { ParamSource, RedirectError, RouteParamValues } from './common';
 import { InvalidParam, ParamSanitizer, saneString } from './sanitizers';
 
 export default abstract class Scope {
@@ -104,10 +103,10 @@ export default abstract class Scope {
         if (fallback.length > 0) throw this.fixParam(name, source, fallback);
       }
       const newValues = remainingResults.map(r => r.error ? r.error.newValue! : r.input);
-      throw this.fixParam(name, source, multi ? newValues : newValues[0]);
+      throw this.fixParam(name, source, multi ? newValues : newValues.slice(0, 1));
     }
 
-    if (!multi && results.length > 1) throw this.fixParam(name, source, results[0].input);
+    if (!multi && results.length > 1) throw this.fixParam(name, source, [results[0].input!]);
 
     return results.map(r => r.output!);
   }
@@ -121,14 +120,12 @@ export default abstract class Scope {
    */
   removeQueryParams(name: string): void {
     const rawValue = this.getParamValue(name, 'query');
-    if (rawValue && rawValue.length > 0) throw this.fixParam(name, 'query', undefined);
+    if (rawValue && rawValue.length > 0) throw this.fixParam(name, 'query', []);
   }
 
-  private fixParam(name: string, source: ParamSource, value: undefined | LocationQueryValue | LocationQueryValue[]) {
-    const key = source === 'path' ? 'params' : 'query';
-    // pass value in a deterministic way to facilitate testing
-    const valueNormalized = Array.isArray(value) && value.length < 2 ? value[0] : value;
-    return new RedirectError({ [key]: { [name]: valueNormalized } });
+  private fixParam(name: string, source: ParamSource, value: RouteParamValues) {
+    const key = source === 'path' ? 'path' : 'query';
+    return new RedirectError({ [key]: { [name]: value } });
   }
 
   abstract getAttribute<T>(name: string): T | undefined;

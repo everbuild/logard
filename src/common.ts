@@ -1,8 +1,8 @@
-import { RouteLocationRaw } from 'vue-router';
-
 export type ParamSource = 'path' | 'query';
 
-export type RouteParamMap = Record<string, Array<string>>;
+export type RouteParamValues = Array<string>;
+
+export type RouteParamMap = Record<string, RouteParamValues>;
 
 export interface RouteParams {
   path: RouteParamMap;
@@ -15,8 +15,8 @@ export type RouteAttributes = Record<string, any>;
  * If a loader throws this, a redirect to the given location is performed.
  * @see RedirectLimitError
  */
-export class RedirectError extends Error {
-  constructor(public location: RouteLocationRaw) {
+export class RedirectError<CustomTarget = {}> extends Error {
+  constructor(public target: Partial<RouteParams> | CustomTarget) {
     super('redirect');
   }
 }
