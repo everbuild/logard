@@ -5,5 +5,3 @@ export { Loader } from './Loader';
 export type { Uninstall } from './Manager';
 export * from './sanitizers';
 export { default as Scope } from './Scope';
-export type { VueRouterRedirectError } from './vueRouter';
-export { installRouteLoader } from './vueRouter';

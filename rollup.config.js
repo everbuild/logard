@@ -2,7 +2,10 @@ import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 
 export default {
-  input: 'src/index.ts',
+  input: {
+    index: 'src/index.ts',
+    'vue-router': 'src/vueRouter.ts',
+  },
   plugins: [
     typescript({
       include: 'src/**/*',
@@ -10,7 +13,7 @@ export default {
     terser(),
   ],
   output: {
-    file: 'dist/index.js',
+    dir: 'dist',
     format: 'es',
   },
 };
