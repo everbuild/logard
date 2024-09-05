@@ -7,11 +7,11 @@ export interface Uninstall {
 }
 
 export class Manager {
-  activeLoaders = new Set<Loader<any>>();
-  allLoaders = new Set<Loader<any>>();
-  redirectCount = 0;
-  redirectLimit: number;
-  debug: Debug;
+  private activeLoaders = new Set<Loader<any>>();
+  private allLoaders = new Set<Loader<any>>();
+  private redirectCount = 0;
+  private readonly redirectLimit: number;
+  private readonly debug: Debug;
 
   constructor(options?: Options) {
     this.redirectLimit = options?.redirectLimit ?? 25;
@@ -19,34 +19,48 @@ export class Manager {
     });
   }
 
-   async startTransition(name: string, loaders: Array<Loader<any>>, params: RouteParams, attribs: RouteAttributes): Promise<Array<any>> {
+  async startTransition(name: string, loaders: Array<Loader<any>>, params: RouteParams, attribs: RouteAttributes): Promise<Array<any>> {
+    const usedLoaders = new Set<Loader<any>>();
     try {
       this.debug(`Transition to ${name}`);
       const scope = new TrackingScope(params, attribs);
-      const results = await Promise.all(loaders.map(l => l.getResult(scope)));
+
+      const results = await Promise.allSettled(loaders.map(async l => {
+        const result = l.getResult(scope);
+        l.collectUsedLoaders(usedLoaders);
+        return result;
+      }));
+
+      this.handleErrors(results.filter(r => r.status === 'rejected').map(r => r.reason));
+
       this.redirectCount = 0;
-      return results;
-    } catch (error) {
-      if (error instanceof RedirectError) {
-        if (++this.redirectCount > this.redirectLimit) {
-          this.redirectCount = 0;
-          this.debug('Redirect limit reached');
-          throw new RedirectLimitError();
-        } else {
-          this.debug('Redirecting');
-          throw error;
-        }
-      } else {
-        throw error;
-      }
+      this.activeLoaders = usedLoaders;
+
+      return results.filter(r => r.status === 'fulfilled').map(r => r.value);
     } finally {
-      this.activeLoaders.clear();
-      loaders.forEach(l => l.collectAffectedLoaders(this.activeLoaders));
-      this.activeLoaders.forEach(l => this.allLoaders.add(l));
+      usedLoaders.forEach(l => this.allLoaders.add(l));
     }
   }
 
-   endTransition(): void {
+  private handleErrors(errors: Array<any>): void {
+    const redirect = errors.find(e => e instanceof RedirectError);
+    const handled = redirect || errors[0];
+    errors.forEach(e => e === handled || console.error(e));
+    if (redirect) {
+      if (++this.redirectCount > this.redirectLimit) {
+        this.redirectCount = 0;
+        this.debug('Redirect limit reached');
+        throw new RedirectLimitError();
+      } else {
+        this.debug('Redirecting');
+        throw redirect;
+      }
+    } else if (handled) {
+      throw handled;
+    }
+  }
+
+  endTransition(): void {
     this.allLoaders.forEach(l => {
       if (this.activeLoaders.has(l)) {
         l.clean();
