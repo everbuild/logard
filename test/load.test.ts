@@ -1,55 +1,47 @@
-import { RouteParams } from '../src/common';
 import { Loader } from '../src/Loader.js';
 import { Manager } from '../src/Manager.js';
 
 test('load', async () => {
   const mgr = new Manager();
 
-  const loader1 = new Loader(async (s, pr) => {
+  const userLoader = new Loader(async s => {
     await tick();
-    if (pr === 'hello') return 'bye';
-    return s.getPathParam('pathParam') ?? 'missing pathParam';
+    return s.getPathParam('name') ?? 'missing pathParam';
   });
 
-  const loader2 = new Loader(async s => {
-    const a = await loader1.getResult(s);
-    const b = s.getQueryParam('queryParam') ?? 'missing queryParam';
+  const messageLoader = new Loader<string>(async (s, p) => {
+    const user = await userLoader.getResult(s);
+    const verb = s.getAttribute<string>('verb') ?? '?';
+    const message = s.getQueryParam('message') ?? '?';
     await tick();
-    return `${a} ${b}`;
+    return [user, verb, message, p?.includes(user) && p?.includes(message) && 'again'].filter(Boolean).join(' ');
   });
 
-  const params1: RouteParams = {
-    path: {
-      pathParam: ['hi'],
-    },
-    query: {},
-  };
-
-  const params2: RouteParams = {
-    path: {
-      pathParam: ['hello'],
-    },
-    query: {
-      queryParam: ['world'],
-    },
-  };
-
-  const results1 = await mgr.startTransition('1', [loader1], params1, {});
+  let results = await mgr.startTransition('', [userLoader], { path: { name: ['Eve'] }, query: {} }, {});
   mgr.endTransition();
+  expect(results).toEqual(['Eve']);
 
-  expect(results1).toEqual(['hi']);
-
-  const results2 = await mgr.startTransition('2', [loader2], params2, {});
+  results = await mgr.startTransition('', [messageLoader], { path: { name: ['Eve'] }, query: { message: ['hi'] } }, { verb: 'says' });
   mgr.endTransition();
+  expect(results).toEqual(['Eve says hi']);
 
-  expect(results2).toEqual(['hello world']);
-
-  const results3 = await mgr.startTransition('3', [loader1], params1, {});
+  results = await mgr.startTransition('', [messageLoader], { path: { name: ['Adam'] }, query: { message: ['hi'] } }, { verb: 'says' });
   mgr.endTransition();
+  expect(results).toEqual(['Adam says hi']);
 
-  expect(results3).toEqual(['bye']);
+  results = await mgr.startTransition('', [messageLoader], { path: { name: ['Adam'] }, query: { message: ['what are you hiding'] } }, { verb: 'asks' });
+  mgr.endTransition();
+  expect(results).toEqual(['Adam asks what are you hiding']);
+
+  results = await mgr.startTransition('', [messageLoader], { path: { name: ['Adam'] }, query: { message: ['what are you hiding'] } }, { verb: 'whispers' });
+  mgr.endTransition();
+  expect(results).toEqual(['Adam whispers what are you hiding again']);
+
+  results = await mgr.startTransition('', [userLoader], { path: { name: ['Adam'] }, query: {} }, {});
+  mgr.endTransition();
+  expect(results).toEqual(['Adam']);
 });
 
-export function tick(): Promise<void> {
+function tick(): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, 0));
 }

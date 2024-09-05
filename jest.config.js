@@ -1,5 +1,8 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 export default {
+  roots: ['test', 'src'],
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
   testEnvironment: "node",
   preset: 'ts-jest/presets/default-esm',
   moduleNameMapper: {

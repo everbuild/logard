@@ -12,7 +12,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist",
     "build": "rollup --config",
-    "test": "jest --roots ./test",
+    "test": "jest",
     "preversion": "npm run test && npm run build",
     "postversion": "git push && git push --tags && npm publish"
   },
