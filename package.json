@@ -12,7 +12,7 @@
     "prebuild": "rm -rf ./dist",
     "build": "rollup --config",
     "postbuild": "npm run index-dts && npm run vue-router-dts && rm -rf ./dist/dts",
-    "index-dts": "dts-bundle-generator -o dist/indext.d.ts dist/dts/index.d.ts",
+    "index-dts": "dts-bundle-generator -o dist/index.d.ts dist/dts/index.d.ts",
     "vue-router-dts": "dts-bundle-generator -o dist/vue-router.d.ts dist/dts/vueRouter.d.ts",
     "test": "jest",
     "preversion": "npm run test && npm run build",
